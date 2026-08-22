@@ -4,9 +4,9 @@ Verified 2026-08-20 from current primary sources.
 
 Reverified 2026-08-22:
 
-- Wispr Flow Android 2.2.4 uses a field-aware floating bubble, accessibility insertion, dictionary, app-category writing styles, transcript retry/recovery, copy-last, snooze, bubble sizing/opacity, and cloud-only transcription. Official Android requirements are Android 13+, internet, microphone, overlay, accessibility, and optional battery exemption.
-- Phravia 1.6.7 keeps the user's keyboard and exposes a floating mic, optional full IME, AccessibilityService, Quick Settings tile, external start/stop/language/style actions, local or BYOK processing, offline model management, output styles, and language/script profiles. Its Play-delivered bundle is protected by Play licensing; live sideload onboarding correctly redirected to Play and was not bypassed.
-- Sherpa-ONNX contextual hotwords are supported by transducer models, not the current Whisper backend. Local Voice therefore applies an explicit dictionary after Whisper and before semantic cleanup. Guided calibration proposes corrections but does not claim acoustic-model fine-tuning.
+- Wispr Flow Android 2.2.4 uses a field-aware floating bubble, accessibility insertion, a searchable cross-device dictionary, app-category writing styles, transcript retry/recovery, copy-last, snooze, bubble sizing/opacity, and cloud transcription. Its current Play listing requires Android 13+ and advertises 100+ languages. Official screenshots show separate cancel, recording-status, and finish controls beside the field bubble.
+- Phravia 1.6.7 keeps the user's keyboard and exposes a floating mic, optional full IME, AccessibilityService, Quick Settings tile, external start/stop/language/style actions, local or BYOK processing, offline model management, output styles, and 75 language profiles. Its current Play listing does not ship a custom dictionary; the developer says one is in progress. Sideloaded onboarding rendered, then Play licensing opened Google Play when setup continued. Installer identity and licensing were not bypassed.
+- Sherpa-ONNX `OfflineWhisperModelConfig` has no hotword or initial-prompt input. Local Voice therefore applies an explicit dictionary after Whisper and before semantic cleanup. Guided calibration proposes bounded word and phrase corrections but does not claim acoustic-model fine-tuning.
 - Current competitor evidence was collected from official Wispr documentation/site media, Google Play metadata/screenshots, and signed package resources. Proprietary screenshots and APKs remain only in `.reference` and are excluded from publication.
 
 - Android's platform `SpeechRecognizer` can request an on-device recognizer, but support and installed languages depend on the device.
@@ -26,6 +26,7 @@ Primary sources:
 - https://github.com/k2-fsa/sherpa-onnx/releases/tag/v1.13.6
 - https://k2-fsa.github.io/sherpa/onnx/hotwords/index.html
 - https://wisprflow.ai/android
+- https://play.google.com/store/apps/details?id=com.wispr.flowapp
 - https://docs.wisprflow.ai/articles/2809924024-android-download-installation-guide
 - https://docs.wisprflow.ai/articles/6344532666-android-system-requirements
 - https://phravia.com/

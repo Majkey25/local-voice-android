@@ -4,7 +4,7 @@ Local Voice is an Android-only, local-first dictation app. It keeps the active k
 
 ## Install the APK
 
-1. Copy `release/LocalVoice-0.3.0.apk` to the phone.
+1. Copy `release/LocalVoice-0.3.1.apk` to the phone.
 2. Allow installation from the app that opens the APK.
 3. Install and open **Local Voice**.
 4. Pick one of the supported system languages shown by the onboarding flow.
@@ -19,7 +19,7 @@ Tap the floating **MIC** button to start and stop dictation. Drag the button to 
 
 - **Dictionary** stores exact spoken → written forms per language and applies them even in Raw mode.
 - **Snippets** expand only an exact spoken trigger, so ordinary sentences are not replaced accidentally.
-- **Voice calibration** records a 1–2 minute guided sample in RAM, compares local Whisper output with the displayed text, and proposes explicit dictionary corrections. It does not claim to fine-tune Whisper model weights.
+- **Voice calibration** records a roughly two-minute guided sample in RAM, compares local Whisper output with the displayed text, and proposes explicit dictionary corrections. Consecutive mistakes in a name or product stay one phrase. It does not claim to fine-tune Whisper model weights.
 - **Cleanup** offers Raw, Light, and Polished profiles. Bubble size and opacity are adjustable.
 
 Tap starts normal toggle dictation. Hold the bubble for push-to-talk; release to process. A separate cancel action is visible while recording.

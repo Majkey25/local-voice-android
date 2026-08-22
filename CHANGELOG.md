@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.1 - 2026-08-22
+
+### Changed
+
+- Tier-one calibration scripts now contain 180 to 260 words for roughly two minutes of natural reading.
+- Consecutive recognition mistakes in a name or product are proposed as one phrase correction.
+
+### Safety
+
+- Calibration rejects correction phrases longer than four words instead of creating broad dictionary rules.
+
 ## 0.3.0 - 2026-08-22
 
 ### Added

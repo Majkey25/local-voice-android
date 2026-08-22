@@ -1,5 +1,33 @@
 # Android QA record
 
+## 0.3.1 candidate - 2026-08-22
+
+Release gate:
+
+- `:app:testDebugUnitTest`: 42 tests passed; zero failures and zero skips.
+- `:app:lintDebug`: passed with zero errors and six warnings.
+- `:app:assembleDebug` and `:app:assembleDebugAndroidTest`: passed.
+- Combined clean gate: `BUILD SUCCESSFUL` with all 84 tasks executed.
+- APK: 61,514,584 bytes; SHA-256 `463f793da93ec02bf3a37e782e349a4db697a0998602e38562a7adc2d034708e`.
+- Package `cz.localvoice.app`, version `0.3.1` (`4`), minimum API 26, target API 36.
+- APK Signature Scheme v2 verified with the Android debug certificate.
+
+Recognition personalization:
+
+- Tier-one calibration prompts contain 180 to 260 words and render as a scrollable roughly two-minute script.
+- Consecutive substitutions such as `lokal vojs` are proposed as one `Local Voice` phrase correction.
+- Correction runs longer than four words are rejected.
+- Dictionary add, save, process restart, reload, and delete passed live on `emulator-5600`.
+- The updated Czech calibration and dictionary screens rendered without a fresh `AndroidRuntime` crash.
+- The exact `release/LocalVoice-0.3.1.apk` installed as an upgrade and cold-launched with version `0.3.1` (`4`).
+
+Competitor refresh:
+
+- Current official Play screenshots for Wispr Flow 2.2.4 and Phravia 1.6.7 were archived under ignored `.reference` research evidence.
+- Phravia onboarding rendered from the signed sideload, then Play licensing opened Google Play when setup continued. The license was not bypassed.
+- Wispr Flow's developer-disabled APKMirror download was respected. Its package, version, certificate, requirements, screenshots, and current feature set were verified from Google Play, Wispr documentation, and APKMirror metadata.
+- The isolated AVD has no Google account. No public Google Play test account exists, and no unrecoverable account or fake phone verification was created.
+
 ## 0.3.0 checkpoint — 2026-08-22
 
 Fresh local gate:

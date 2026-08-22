@@ -33,26 +33,48 @@ object RecognitionCalibration {
         expected: List<Word>,
         actual: List<Word>,
         distance: Array<IntArray>,
-    ): List<DictionaryEntry> = buildList {
-        var row = expected.size
-        var column = actual.size
-        while (row > 0 || column > 0) {
-            if (row > 0 && column > 0 && expected[row - 1].normalized == actual[column - 1].normalized) {
-                row--
-                column--
-            } else if (row > 0 && column > 0 &&
-                distance[row][column] == distance[row - 1][column - 1] + 1
-            ) {
-                add(DictionaryEntry(actual[column - 1].normalized, expected[row - 1].raw))
-                row--
-                column--
-            } else if (row > 0 && distance[row][column] == distance[row - 1][column] + 1) {
-                row--
-            } else {
-                column--
+    ): List<DictionaryEntry> {
+        val alignment = buildList<Substitution?> {
+            var row = expected.size
+            var column = actual.size
+            while (row > 0 || column > 0) {
+                if (row > 0 && column > 0 && expected[row - 1].normalized == actual[column - 1].normalized) {
+                    add(null)
+                    row--
+                    column--
+                } else if (row > 0 && column > 0 &&
+                    distance[row][column] == distance[row - 1][column - 1] + 1
+                ) {
+                    add(Substitution(expected[row - 1], actual[column - 1]))
+                    row--
+                    column--
+                } else if (row > 0 && distance[row][column] == distance[row - 1][column] + 1) {
+                    add(null)
+                    row--
+                } else {
+                    add(null)
+                    column--
+                }
             }
+        }.asReversed()
+        val result = mutableListOf<DictionaryEntry>()
+        val run = mutableListOf<Substitution>()
+        fun flush() {
+            if (run.isEmpty()) return
+            if (run.size <= MAX_PHRASE_WORDS) {
+                result += DictionaryEntry(
+                    spoken = run.joinToString(" ") { it.actual.normalized },
+                    written = run.joinToString(" ") { it.expected.raw },
+                )
+            }
+            run.clear()
         }
-    }.asReversed()
+        alignment.forEach { substitution ->
+            if (substitution == null) flush() else run += substitution
+        }
+        flush()
+        return result
+    }
 
     private fun matrix(expected: List<String>, actual: List<String>): Array<IntArray> {
         val result = Array(expected.size + 1) { IntArray(actual.size + 1) }
@@ -78,6 +100,9 @@ object RecognitionCalibration {
 
     private data class Word(val raw: String, val normalized: String)
 
+    private data class Substitution(val expected: Word, val actual: Word)
+
     private val WORD = Regex("""[\p{L}\p{N}]+(?:['’\-][\p{L}\p{N}]+)*""")
+    private const val MAX_PHRASE_WORDS = 4
     private const val MAX_SUGGESTIONS = 24
 }

@@ -53,6 +53,26 @@ class RecognitionCalibrationTest {
     }
 
     @Test
+    fun calibrationKeepsMultiwordNamesAsOneCorrection() {
+        val report = RecognitionCalibration.analyze(
+            reference = "Používám Local Voice každý den.",
+            transcript = "Používám lokal vojs každý den.",
+        )
+
+        assertEquals(listOf(DictionaryEntry("lokal vojs", "Local Voice")), report.suggestions)
+    }
+
+    @Test
+    fun calibrationRejectsLongMismatchPhrases() {
+        val report = RecognitionCalibration.analyze(
+            reference = "alpha beta gamma delta epsilon",
+            transcript = "one two three four five",
+        )
+
+        assertTrue(report.suggestions.isEmpty())
+    }
+
+    @Test
     fun calibrationDoesNotTurnInsertionsOrDeletionsIntoDictionaryRules() {
         assertTrue(
             RecognitionCalibration.analyze(
