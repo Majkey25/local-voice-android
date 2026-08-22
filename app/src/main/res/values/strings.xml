@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Local Voice</string>
+    <string name="accessibility_name">Local Voice – plovoucí mikrofon</string>
+    <string name="accessibility_description">Lokální diktování a bezpečné vložení textu do aktivního pole.</string>
+    <string name="accessibility_disclosure_title">Než zapneš plovoucí mikrofon</string>
+    <string name="accessibility_disclosure_field_access">Local Voice čte právě aktivní textové pole, aby mohl bezpečně vrátit výsledek na stejné místo. Sémantický model nyní dostává jen vybraný text.</string>
+    <string name="accessibility_disclosure_recording">Mikrofon začne poslouchat jen po klepnutí nebo podržení plovoucího tlačítka.</string>
+    <string name="accessibility_disclosure_insertion">Výsledný text aplikace vloží zpět do stejného ověřeného pole.</string>
+    <string name="accessibility_disclosure_secure_fields">Hesla, PIN, číselná a telefonní pole jsou zablokovaná.</string>
+    <string name="accessibility_disclosure_network">V režimu Local Only zůstává diktování v telefonu. Internet se používá pro stažení ověřených modelů.</string>
+    <string name="accessibility_disclosure_consent">Rozumím, jak Local Voice používá službu zpřístupnění.</string>
+    <string name="accessibility_disclosure_continue">Souhlasím a otevřít nastavení</string>
+    <string name="accessibility_disclosure_open">Zkontrolovat přístup plovoucího mikrofonu</string>
+    <string name="microphone_label">MIC</string>
+    <string name="no_speech_detected">Nebyla rozpoznána řeč.</string>
+    <string name="raw_fallback_used">Sémantická úprava selhala. Používám surový přepis.</string>
+    <string name="target_lost">Aktivní textové pole se změnilo. Nahrávání bylo zrušeno.</string>
+    <string name="unsupported_field">V tomto poli je diktování zablokované.</string>
+    <string name="undo_last_insertion">Vrátit poslední vložení</string>
+    <string name="cancel_recording">Zrušit nahrávání</string>
+    <string name="recording_cancelled">Nahrávání bylo zrušeno.</string>
+</resources>
