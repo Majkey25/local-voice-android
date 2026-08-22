@@ -97,4 +97,28 @@ class RecognitionCalibrationTest {
 
         assertTrue(report.correctedAccuracyPercent > report.baselineAccuracyPercent)
     }
+
+    @Test
+    fun calibrationDoesNotSuggestConfirmedCorrectionsAgain() {
+        val report = RecognitionCalibration.analyze(
+            reference = "Používám Local Voice každý den.",
+            transcript = "Používám lokal vojs každý den.",
+            confirmedDictionary = listOf(DictionaryEntry("lokal vojs", "Local Voice")),
+        )
+
+        assertTrue(report.suggestions.isEmpty())
+        assertEquals(100, report.correctedAccuracyPercent)
+    }
+
+    @Test
+    fun calibrationRejectsCorrectionsThatRequireDictionaryChaining() {
+        val report = RecognitionCalibration.analyze(
+            reference = "Používám Local Voices každý den.",
+            transcript = "Používám lokal vojs každý den.",
+            confirmedDictionary = listOf(DictionaryEntry("lokal vojs", "Local Voice")),
+        )
+
+        assertTrue(report.suggestions.isEmpty())
+        assertTrue(report.correctedAccuracyPercent < 100)
+    }
 }

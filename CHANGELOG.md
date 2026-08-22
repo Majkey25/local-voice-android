@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.2 - 2026-08-22
+
+### Fixed
+
+- Recalibration applies confirmed dictionary entries before proposing corrections, so accepted terms are not suggested again.
+- Calibration accuracy now reports raw recognition against cumulative personal corrections.
+
 ## 0.3.1 - 2026-08-22
 
 ### Changed

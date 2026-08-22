@@ -9,15 +9,28 @@ data class CalibrationReport(
 )
 
 object RecognitionCalibration {
-    fun analyze(reference: String, transcript: String): CalibrationReport {
+    fun analyze(
+        reference: String,
+        transcript: String,
+        confirmedDictionary: List<DictionaryEntry> = emptyList(),
+    ): CalibrationReport {
         val expected = words(reference)
-        val actual = words(transcript)
-        require(expected.isNotEmpty() && actual.isNotEmpty()) { "Calibration text is empty" }
-        val baseline = matrix(expected.map(Word::normalized), actual.map(Word::normalized))
-        val suggestions = substitutions(expected, actual, baseline)
+        val raw = words(transcript)
+        require(expected.isNotEmpty() && raw.isNotEmpty()) { "Calibration text is empty" }
+        val baseline = matrix(expected.map(Word::normalized), raw.map(Word::normalized))
+        val personalizedTranscript = Personalization.applyDictionary(transcript, confirmedDictionary)
+        val personalized = words(personalizedTranscript)
+        val personalizedDistance = matrix(
+            expected.map(Word::normalized),
+            personalized.map(Word::normalized),
+        )
+        val suggestions = substitutions(expected, personalized, personalizedDistance)
             .distinctBy(DictionaryEntry::spoken)
+            .filter { candidate ->
+                Personalization.applyDictionary(transcript, confirmedDictionary + candidate) != personalizedTranscript
+            }
             .take(MAX_SUGGESTIONS)
-        val corrected = words(Personalization.applyDictionary(transcript, suggestions))
+        val corrected = words(Personalization.applyDictionary(transcript, confirmedDictionary + suggestions))
         val correctedDistance = matrix(
             expected.map(Word::normalized),
             corrected.map(Word::normalized),

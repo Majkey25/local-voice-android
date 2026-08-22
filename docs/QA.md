@@ -1,5 +1,19 @@
 # Android QA record
 
+## 0.3.2 candidate - 2026-08-22
+
+- 44 JVM tests passed; zero failures and zero skips.
+- Android lint passed with zero errors and six warnings.
+- Debug APK and Android test APK assembled in a clean 84-task gate.
+- Recalibration applies the active language dictionary before alignment and does not suggest confirmed terms again.
+- Candidate corrections must improve the real one-pass dictionary output; rules that only work through chaining are rejected.
+- Raw sample accuracy remains separate from accuracy after cumulative personal corrections.
+- APK: 61,515,380 bytes; SHA-256 `ede87908d00945bbf74c9e06d202a06a2888dbae94906275a6cda387a0654bfe`.
+- Package `cz.localvoice.app`, version `0.3.2` (`5`), minimum API 26, target API 36.
+- APK Signature Scheme v2 verified with the Android debug certificate.
+- The exact `release/LocalVoice-0.3.2.apk` installed and cold-launched on `emulator-5600` without a fresh fatal log.
+- All 16 current Wispr Flow and all 8 current Phravia Google Play screenshots were archived under ignored `.reference` evidence.
+
 ## 0.3.1 candidate - 2026-08-22
 
 Release gate:

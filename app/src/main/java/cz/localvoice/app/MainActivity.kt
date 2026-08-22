@@ -641,10 +641,14 @@ class MainActivity : ComponentActivity() {
             calibrationError?.let { ErrorText(it) }
             if (report != null) {
                 StatusLine("Přesnost vzorku", true, "${report.baselineAccuracyPercent} %")
-                StatusLine("Po navržených opravách", true, "${report.correctedAccuracyPercent} %")
-                Text("Druhé číslo měří stejný kalibrační vzorek; není to tvrzení o dotrénování vah modelu.", fontSize = 12.sp)
+                StatusLine("Po osobních opravách", true, "${report.correctedAccuracyPercent} %")
+                Text(
+                    "Druhé číslo zahrnuje potvrzený slovník i nové návrhy na stejném vzorku; " +
+                        "nejde o dotrénování vah modelu.",
+                    fontSize = 12.sp,
+                )
                 if (report.suggestions.isEmpty()) {
-                    Text("Nenašel jsem bezpečnou jednoslovnou záměnu k potvrzení.")
+                    Text("Nenašel jsem žádnou novou bezpečnou záměnu k potvrzení.")
                 } else {
                     report.suggestions.forEach { suggestion ->
                         Text("${suggestion.spoken} → ${suggestion.written}")
@@ -792,6 +796,7 @@ class MainActivity : ComponentActivity() {
                                 Locale.forLanguageTag(selectedLanguageTag).language,
                             ),
                             transcript = engine.transcribe(speech),
+                            confirmedDictionary = dictionary,
                         )
                     }
                 }
