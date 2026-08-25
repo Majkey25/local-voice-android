@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.0 - 2026-08-25
+
+### Added
+
+- The speech-language picker always offers English, Czech, German, French, and Spanish.
+- Supported system and keyboard languages appear first without hiding other choices.
+
+### Changed
+
+- The complete application interface, accessibility disclosure, overlay feedback, errors, and controls now use English by default.
+- New installations default to English speech recognition while saved language profiles remain unchanged.
+
 ## 0.3.2 - 2026-08-22
 
 ### Fixed

@@ -1,4 +1,4 @@
-# Local Voice Android 0.3
+# Local Voice Android 0.4
 
 ## Outcome
 
@@ -11,12 +11,12 @@ An installable Android APK whose primary flow is:
 - Preserve the user's normal keyboard.
 - Use an AccessibilityService-owned movable microphone overlay.
 - Keep captured audio in bounded RAM and discard it after transcription.
-- Run Czech Whisper STT and semantic editing on the phone after one verified model-pack download.
+- Run multilingual Whisper STT and semantic editing on the phone after one verified model-pack download.
 - Reject cloud inference and cleartext traffic.
 - Refuse secure/password fields.
 - Insert only when the focused field still matches the captured snapshot.
 - Keep a clipboard fallback and one-step bounded undo.
-- Read user text with Android's installed Czech TTS voice.
+- Read user text with an installed Android TTS voice for the selected speech language.
 - Keep transcript/audio history off.
 - Keep independent cleanup, dictionary, snippets, and calibration data per language profile.
 - Apply exact dictionary replacements before semantic cleanup, including in Raw mode.
@@ -24,7 +24,8 @@ An installable Android APK whose primary flow is:
 - Offer a guided 1–2 minute local calibration that measures the displayed sample and requires confirmation before storing suggestions.
 - Support tap-to-toggle and hold-to-talk with separate cancel and bounded undo actions.
 - Let the user change the bubble size and opacity while retaining a minimum 48 dp touch target.
-- Onboard from the phone's configured Tier 1 languages.
+- Use English UI by default and offer every supported Tier 1 speech language independently of system locale.
+- Put supported system and keyboard languages first in the speech-language picker.
 - Show localized writing-style examples and persist one language profile.
 - Let the user paste or import a bounded UTF-8 writing sample for local style imitation.
 - Keep Personal Voice in a separate consent-gated Voice Lab.

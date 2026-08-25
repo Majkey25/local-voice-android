@@ -4,14 +4,14 @@ Local Voice is an Android-only, local-first dictation app. It keeps the active k
 
 ## Install the APK
 
-1. Copy `release/LocalVoice-0.3.2.apk` to the phone.
+1. Copy `release/LocalVoice-0.4.0.apk` to the phone.
 2. Allow installation from the app that opens the APK.
 3. Install and open **Local Voice**.
-4. Pick one of the supported system languages shown by the onboarding flow.
+4. Pick English, Czech, German, French, or Spanish. This choice is independent of the phone's system language.
 5. Pick a writing style or import a UTF-8 `.txt` writing sample.
 6. Download the 601 MB Multilingual Offline Pack.
 7. Allow microphone access.
-8. Enable **Local Voice – plovoucí mikrofon** in Android accessibility settings.
+8. Enable **Local Voice - floating microphone** in Android accessibility settings.
 
 Tap the floating **MIC** button to start and stop dictation. Drag the button to move it. Tap **↶** within eight seconds to undo the last insertion.
 

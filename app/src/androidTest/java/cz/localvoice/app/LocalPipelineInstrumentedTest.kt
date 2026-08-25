@@ -15,6 +15,43 @@ import java.util.Locale
 @RunWith(AndroidJUnit4::class)
 class LocalPipelineInstrumentedTest {
     @Test
+    fun legacyProfileSurvivesLanguageRoundTrip() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val preferences = context.getSharedPreferences(
+            VoiceAccessibilityService.PREFERENCES,
+            android.content.Context.MODE_PRIVATE,
+        )
+        val dictionary = listOf(DictionaryEntry("lokal vojs", "Local Voice"))
+        val snippets = listOf(TextSnippet("podpis", "S pozdravem"))
+        preferences.edit()
+            .clear()
+            .putString("language_tag", "cs-CZ")
+            .putString("style", UserSettings.CUSTOM)
+            .putString("writing_sample", "Legacy Czech writing sample")
+            .putString("cleanup_cs-cz", CleanupLevel.LIGHT.name)
+            .putString("dictionary_cs-cz", Personalization.encodeDictionary(dictionary))
+            .putString("snippets_cs-cz", Personalization.encodeSnippets(snippets))
+            .commit()
+
+        try {
+            val initialCzech = UserSettings.load(context)
+            assertEquals(UserSettings.CUSTOM, initialCzech.style)
+            assertEquals("Legacy Czech writing sample", initialCzech.writingSample)
+
+            UserSettings.save(context, UserSettings.load(context, "en-US"), onboardingDone = false)
+            val returnedCzech = UserSettings.load(context, "cs-CZ")
+
+            assertEquals(UserSettings.CUSTOM, returnedCzech.style)
+            assertEquals("Legacy Czech writing sample", returnedCzech.writingSample)
+            assertEquals(CleanupLevel.LIGHT, returnedCzech.cleanup)
+            assertEquals(dictionary, returnedCzech.dictionary)
+            assertEquals(snippets, returnedCzech.snippets)
+        } finally {
+            preferences.edit().clear().commit()
+        }
+    }
+
+    @Test
     fun localSemanticEngineAppliesLatestCorrection() = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val prerequisitesReady = ModelPack.isReady(context) && SemanticEngine.isAvailable(context)

@@ -160,7 +160,7 @@ class VoiceAccessibilityService : AccessibilityService() {
             State.HIDDEN -> Unit
             State.READY -> startRecording()
             State.LISTENING -> stopAndProcess()
-            State.PROCESSING -> toast("Lokální model právě pracuje")
+            State.PROCESSING -> toast("The local model is still processing")
         }
     }
 
@@ -172,7 +172,7 @@ class VoiceAccessibilityService : AccessibilityService() {
             return
         }
         if (!ModelPack.isReady(this)) {
-            toast("Nejdřív stáhni Multilingual Offline Pack")
+            toast("Download the Multilingual Offline Pack first")
             startActivity(
                 Intent(this, MainActivity::class.java)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
@@ -182,7 +182,7 @@ class VoiceAccessibilityService : AccessibilityService() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) !=
             PackageManager.PERMISSION_GRANTED
         ) {
-            toast("Povol mikrofon v aplikaci Local Voice")
+            toast("Allow microphone access in Local Voice")
             return
         }
         snapshot = FieldSnapshot.from(facts)
@@ -191,7 +191,7 @@ class VoiceAccessibilityService : AccessibilityService() {
             capture.start(this, scope) { stopAndProcess() }
             setState(State.LISTENING)
         } catch (error: RuntimeException) {
-            toast(error.message ?: "Mikrofon nelze spustit")
+            toast(error.message ?: "The microphone cannot start")
             resetTargetState()
         }
     }
@@ -239,11 +239,11 @@ class VoiceAccessibilityService : AccessibilityService() {
                     showUndo()
                 } else {
                     copy(plan.text)
-                    toast("Výsledek je ve schránce")
+                    toast("The result is in the clipboard")
                     resetTargetState()
                 }
             } catch (error: RuntimeException) {
-                toast(error.message ?: "Diktování selhalo")
+                toast(error.message ?: "Dictation failed")
                 resetTargetState()
             } finally {
                 snapshot = null
@@ -302,7 +302,7 @@ class VoiceAccessibilityService : AccessibilityService() {
         val node = focusedEditable()
         val current = node?.toFacts()
         if (current == null || !FieldTargetPolicy.isFresh(saved.after, current)) {
-            toast("Pole se změnilo; undo bylo z bezpečnostních důvodů zablokované")
+            toast("The field changed, so undo was blocked for safety")
             hideUndo(clearSnapshot = true)
             hideCancel()
             return resetTargetState()
@@ -314,7 +314,7 @@ class VoiceAccessibilityService : AccessibilityService() {
             )
         }
         if (!node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)) {
-            toast("Undo se nepodařilo")
+            toast("Undo failed")
         } else {
             node.performAction(
                 AccessibilityNodeInfo.ACTION_SET_SELECTION,
@@ -508,15 +508,15 @@ class VoiceAccessibilityService : AccessibilityService() {
             }
             State.READY -> {
                 hideCancel()
-                configureBubble("MIC", Color.rgb(17, 17, 17), "Spustit lokální diktování")
+                configureBubble("MIC", Color.rgb(17, 17, 17), "Start local dictation")
             }
             State.LISTENING -> {
-                configureBubble("✓", Color.rgb(190, 25, 25), "Dokončit nahrávání")
+                configureBubble("✓", Color.rgb(190, 25, 25), "Finish recording")
                 showCancel()
             }
             State.PROCESSING -> {
                 hideCancel()
-                configureBubble("…", Color.rgb(80, 80, 80), "Lokální zpracování")
+                configureBubble("…", Color.rgb(80, 80, 80), "Processing locally")
             }
         }
     }

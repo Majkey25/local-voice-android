@@ -2,6 +2,7 @@ package cz.localvoice.app
 
 import android.app.LocaleManager
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Build
 import android.view.inputmethod.InputMethodManager
 import android.view.inputmethod.InputMethodSubtype
@@ -28,18 +29,23 @@ object UserSettings {
     const val CUSTOM = "custom"
     const val VERBATIM = "verbatim"
     const val MAX_WRITING_SAMPLE = 12_000
+    const val DEFAULT_LANGUAGE_TAG = "en-US"
     private const val ACCESSIBILITY_DISCLOSURE_VERSION = 1
     private val styles = setOf(CASUAL, BALANCED, PROFESSIONAL, CUSTOM, VERBATIM)
-    private val tierOneLanguages = setOf("cs", "en", "de", "fr", "es")
+    private val supportedLanguageTags = listOf("en-US", "cs-CZ", "de-DE", "fr-FR", "es-ES")
+    private val supportedLanguages = supportedLanguageTags.map { Locale.forLanguageTag(it).language }.toSet()
 
     fun load(context: Context, requestedLanguageTag: String? = null): UserProfile {
         val preferences = preferences(context)
         val savedLanguageTag = preferences.getString("language_tag", null)
+        if (requestedLanguageTag == null && savedLanguageTag != null) {
+            migrateLegacyProfile(preferences, savedLanguageTag)
+        }
         val languageTag = requestedLanguageTag
             ?.takeIf { Locale.forLanguageTag(it).language.isNotBlank() }
             ?: savedLanguageTag
             ?.takeIf { Locale.forLanguageTag(it).language.isNotBlank() }
-            ?: phoneLanguages(context).first().toLanguageTag()
+            ?: DEFAULT_LANGUAGE_TAG
         val suffix = profileSuffix(languageTag)
         val useLegacyProfile = requestedLanguageTag == null ||
             profileSuffix(savedLanguageTag.orEmpty()) == suffix
@@ -111,7 +117,7 @@ object UserSettings {
         }
     }
 
-    fun phoneLanguages(context: Context): List<Locale> {
+    fun availableLanguages(context: Context): List<Locale> {
         val localeList = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             context.getSystemService(LocaleManager::class.java).systemLocales
         } else {
@@ -126,10 +132,17 @@ object UserSettings {
                 subtype.localeTag()
             }
         }
-        val supported = mergeLanguageTags(systemTags, keyboardTags)
-            .map(Locale::forLanguageTag)
-            .filter { it.language in tierOneLanguages }
-        return supported.ifEmpty { listOf(Locale.forLanguageTag("en-US")) }
+        return availableLanguageTags(systemTags, keyboardTags).map(Locale::forLanguageTag)
+    }
+
+    internal fun availableLanguageTags(systemTags: List<String>, keyboardTags: List<String>): List<String> {
+        val preferred = mergeLanguageTags(systemTags, keyboardTags)
+            .filter { Locale.forLanguageTag(it).language in supportedLanguages }
+            .distinctBy { Locale.forLanguageTag(it).language }
+        val preferredLanguages = preferred.map { Locale.forLanguageTag(it).language }.toSet()
+        return preferred + supportedLanguageTags.filter {
+            Locale.forLanguageTag(it).language !in preferredLanguages
+        }
     }
 
     internal fun mergeLanguageTags(systemTags: List<String>, keyboardTags: List<String>): List<String> =
@@ -143,11 +156,11 @@ object UserSettings {
             .toList()
 
     fun styleName(style: String): String = when (style) {
-        CASUAL -> "Přirozený"
-        PROFESSIONAL -> "Pracovní"
-        CUSTOM -> "Můj styl"
-        VERBATIM -> "Doslova"
-        else -> "Vyvážený"
+        CASUAL -> "Natural"
+        PROFESSIONAL -> "Professional"
+        CUSTOM -> "My style"
+        VERBATIM -> "Verbatim"
+        else -> "Balanced"
     }
 
     fun stylePreviews(language: String): List<StylePreview> {
@@ -179,9 +192,9 @@ object UserSettings {
             )
         }
         return listOf(
-            StylePreview(CASUAL, "Přirozený", examples[0]),
-            StylePreview(BALANCED, "Vyvážený", examples[1]),
-            StylePreview(PROFESSIONAL, "Pracovní", examples[2]),
+            StylePreview(CASUAL, "Natural", examples[0]),
+            StylePreview(BALANCED, "Balanced", examples[1]),
+            StylePreview(PROFESSIONAL, "Professional", examples[2]),
         )
     }
 
@@ -215,6 +228,18 @@ object UserSettings {
         VoiceAccessibilityService.PREFERENCES,
         Context.MODE_PRIVATE,
     )
+
+    private fun migrateLegacyProfile(preferences: SharedPreferences, languageTag: String) {
+        val suffix = profileSuffix(languageTag)
+        preferences.edit {
+            if (!preferences.contains("style_$suffix")) {
+                preferences.getString("style", null)?.let { putString("style_$suffix", it) }
+            }
+            if (!preferences.contains("writing_sample_$suffix")) {
+                preferences.getString("writing_sample", null)?.let { putString("writing_sample_$suffix", it) }
+            }
+        }
+    }
 
     private fun profileSuffix(languageTag: String): String = Locale.forLanguageTag(languageTag)
         .toLanguageTag()

@@ -66,7 +66,7 @@ import kotlin.math.roundToInt
 class MainActivity : ComponentActivity() {
     private var screen by mutableStateOf(AppScreen.ONBOARDING)
     private var onboardingStep by mutableIntStateOf(0)
-    private var selectedLanguageTag by mutableStateOf("cs-CZ")
+    private var selectedLanguageTag by mutableStateOf(UserSettings.DEFAULT_LANGUAGE_TAG)
     private var selectedStyle by mutableStateOf(UserSettings.BALANCED)
     private var writingSample by mutableStateOf("")
     private var cleanupLevel by mutableStateOf(CleanupLevel.POLISHED)
@@ -213,18 +213,18 @@ class MainActivity : ComponentActivity() {
             if (result.resultCode == RESULT_OK) result.data?.data?.let(::loadWritingSample)
         }
         when (onboardingStep) {
-            0 -> AppPage("LOCAL VOICE", "Mluv. Telefon píše.") {
-                Text("Lokální hlasová vrstva pro celý telefon. Bez účtu, bez cloudu, bez výměny klávesnice.")
-                Feature("Hlas → text", "Lokální přepis a sémantické opravy")
-                Feature("Text → hlas", "Pouze nainstalovaný offline hlas")
-                Feature("Soukromí", "Audio v RAM, historie vypnutá")
+            0 -> AppPage("LOCAL VOICE", "Speak. Your phone types.") {
+                Text("A local voice layer for your whole phone. No account, no cloud, no keyboard replacement.")
+                Feature("Voice → text", "Local transcription and semantic cleanup")
+                Feature("Text → voice", "Installed offline voices only")
+                Feature("Privacy", "Audio stays in RAM, history is off")
                 Spacer(Modifier.height(12.dp))
-                PrimaryButton("Začít") { onboardingStep = 1 }
+                PrimaryButton("Get started") { onboardingStep = 1 }
             }
 
-            1 -> AppPage("KROK 1 / 5", "Jakým jazykem hlavně mluvíš?") {
-                Text("Nabízíme jazyky nastavené v telefonu. Pořadí respektuje systém.")
-                UserSettings.phoneLanguages(this@MainActivity).forEach { locale ->
+            1 -> AppPage("STEP 1 / 5", "Which language do you want to speak?") {
+                Text("All supported languages are available. System and keyboard languages appear first.")
+                UserSettings.availableLanguages(this@MainActivity).forEach { locale ->
                     OutlinedButton(
                         onClick = {
                             selectLanguage(locale.toLanguageTag())
@@ -244,8 +244,8 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            2 -> AppPage("KROK 2 / 5", "Který text zní nejvíc jako ty?") {
-                Text("Rozdíl je v délce vět, interpunkci, čárkách a tónu.")
+            2 -> AppPage("STEP 2 / 5", "Which result sounds most like you?") {
+                Text("Compare sentence length, punctuation, rhythm, and tone.")
                 UserSettings.stylePreviews(Locale.forLanguageTag(selectedLanguageTag).language).forEach { preview ->
                     OutlinedButton(
                         onClick = {
@@ -271,28 +271,28 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            3 -> AppPage("KROK 3 / 5", "Nebo nauč aplikaci svůj styl") {
-                Text("Vlož nebo načti vlastní text. Zůstane jen v telefonu a lokální model z něj převezme styl, ne obsah.")
+            3 -> AppPage("STEP 3 / 5", "Or teach the app your style") {
+                Text("Paste or load your own text. It stays on this phone. The local model learns style, not content.")
                 OutlinedTextField(
                     value = writingSample,
                     onValueChange = { writingSample = it.take(UserSettings.MAX_WRITING_SAMPLE) },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 7,
-                    label = { Text("Tvůj text – ideálně 300+ znaků") },
+                    label = { Text("Your text, ideally 300+ characters") },
                 )
-                Text("${writingSample.length} / ${UserSettings.MAX_WRITING_SAMPLE} znaků", fontSize = 12.sp)
+                Text("${writingSample.length} / ${UserSettings.MAX_WRITING_SAMPLE} characters", fontSize = 12.sp)
                 OutlinedButton(
                     onClick = {
                         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
                             .addCategory(Intent.CATEGORY_OPENABLE)
                             .setType("text/plain")
-                        openDocument.launch(Intent.createChooser(intent, "Vybrat text"))
+                        openDocument.launch(Intent.createChooser(intent, "Choose text"))
                     },
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text("Načíst UTF-8 .txt") }
+                ) { Text("Load UTF-8 .txt") }
                 documentError?.let { ErrorText(it) }
                 PrimaryButton(
-                    label = "Použít můj styl",
+                    label = "Use my style",
                     enabled = writingSample.trim().length >= 200,
                 ) {
                     selectedStyle = UserSettings.CUSTOM
@@ -306,13 +306,13 @@ class MainActivity : ComponentActivity() {
                         onboardingStep = 4
                     },
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text("Přeskočit") }
+                ) { Text("Skip") }
                 OutlinedButton(onClick = { onboardingStep = 2 }, modifier = Modifier.fillMaxWidth()) {
-                    Text("Zpět")
+                    Text("Back")
                 }
             }
 
-            4 -> AppPage("KROK 4 / 5", getString(R.string.accessibility_disclosure_title)) {
+            4 -> AppPage("STEP 4 / 5", getString(R.string.accessibility_disclosure_title)) {
                 Text(getString(R.string.accessibility_disclosure_field_access))
                 Text(getString(R.string.accessibility_disclosure_recording))
                 Text(getString(R.string.accessibility_disclosure_insertion))
@@ -337,46 +337,46 @@ class MainActivity : ComponentActivity() {
                     startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
                 }
                 OutlinedButton(onClick = { onboardingStep = 3 }, modifier = Modifier.fillMaxWidth()) {
-                    Text("Zpět")
+                    Text("Back")
                 }
             }
 
-            else -> AppPage("KROK 5 / 5", "Dokončit lokální nastavení") {
-                Text("Model se stáhne jednou. Potom diktování funguje i v režimu letadlo.")
+            else -> AppPage("STEP 5 / 5", "Finish local setup") {
+                Text("Download the model once. Dictation then works in airplane mode.")
                 StatusLine(
                     "Multilingual Offline Pack",
                     modelReady,
-                    if (modelReady) "Připraven" else "${ModelPack.totalBytes / 1_000_000} MB",
+                    if (modelReady) "Ready" else "${ModelPack.totalBytes / 1_000_000} MB",
                 )
-                StatusLine("Mikrofon", microphoneGranted, if (microphoneGranted) "Povolen" else "Čeká")
-                StatusLine("Plovoucí mikrofon", accessibilityEnabled, if (accessibilityEnabled) "Aktivní" else "Čeká")
+                StatusLine("Microphone", microphoneGranted, if (microphoneGranted) "Allowed" else "Pending")
+                StatusLine("Floating microphone", accessibilityEnabled, if (accessibilityEnabled) "Active" else "Pending")
                 PrimaryButton(
                     label = when {
-                        modelReady -> "Offline Pack je připraven"
-                        downloading -> "Stahuji ${(downloadProgress * 100).roundToInt()} %"
-                        else -> "Stáhnout Offline Pack"
+                        modelReady -> "Offline Pack is ready"
+                        downloading -> "Downloading ${(downloadProgress * 100).roundToInt()} %"
+                        else -> "Download Offline Pack"
                     },
                     enabled = !modelReady && !downloading,
                     onClick = ::downloadModels,
                 )
-                downloadError?.let { ErrorText("Stažení selhalo: $it") }
+                downloadError?.let { ErrorText("Download failed: $it") }
                 OutlinedButton(
                     onClick = { permissionLauncher.launch(Manifest.permission.RECORD_AUDIO) },
                     enabled = !microphoneGranted,
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text(if (microphoneGranted) "Mikrofon povolen" else "Povolit mikrofon") }
+                ) { Text(if (microphoneGranted) "Microphone allowed" else "Allow microphone") }
                 OutlinedButton(
                     onClick = { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) },
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text(if (accessibilityEnabled) "Plovoucí mikrofon je aktivní" else "Zapnout plovoucí mikrofon") }
+                ) { Text(if (accessibilityEnabled) "Floating microphone is active" else "Enable floating microphone") }
                 PrimaryButton(
-                    label = "Hotovo",
+                    label = "Done",
                     enabled = modelReady && microphoneGranted && accessibilityEnabled &&
                         UserSettings.accessibilityDisclosureAccepted(this@MainActivity),
                     onClick = ::finishOnboarding,
                 )
                 OutlinedButton(onClick = { onboardingStep = 4 }, modifier = Modifier.fillMaxWidth()) {
-                    Text("Zpět")
+                    Text("Back")
                 }
             }
         }
@@ -384,25 +384,25 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun HomeScreen() {
-        var speechText by remember { mutableStateOf("Ahoj, tohle je místní hlas.") }
+        var speechText by remember { mutableStateOf("Hello, this is a local voice.") }
         val locale = Locale.forLanguageTag(selectedLanguageTag)
         val semanticAvailable = SemanticEngine.isAvailable(this@MainActivity)
-        AppPage("LOCAL VOICE", "Připraveno mluvit.", showNavigation = true) {
-            StatusLine("Jazyk", true, languageName(locale))
-            StatusLine("Styl", true, UserSettings.styleName(selectedStyle))
-            StatusLine("Offline Pack", modelReady, if (modelReady) "Lokální" else "Chybí")
+        AppPage("LOCAL VOICE", "Ready to speak.", showNavigation = true) {
+            StatusLine("Language", true, languageName(locale))
+            StatusLine("Style", true, UserSettings.styleName(selectedStyle))
+            StatusLine("Offline Pack", modelReady, if (modelReady) "Local" else "Missing")
             StatusLine(
-                "Sémantická AI",
+                "Semantic AI",
                 semanticAvailable,
-                if (semanticAvailable) "Aktivní" else "Raw režim",
+                if (semanticAvailable) "Active" else "Raw mode",
             )
-            StatusLine("Plovoucí mikrofon", accessibilityEnabled, if (accessibilityEnabled) "Aktivní" else "Vypnutý")
-            if (!modelReady) PrimaryButton("Stáhnout Offline Pack", onClick = ::downloadModels)
+            StatusLine("Floating microphone", accessibilityEnabled, if (accessibilityEnabled) "Active" else "Off")
+            if (!modelReady) PrimaryButton("Download Offline Pack", onClick = ::downloadModels)
             if (!microphoneGranted) {
                 OutlinedButton(
                     onClick = { permissionLauncher.launch(Manifest.permission.RECORD_AUDIO) },
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text("Povolit mikrofon") }
+                ) { Text("Allow microphone") }
             }
             if (!UserSettings.accessibilityDisclosureAccepted(this@MainActivity)) {
                 OutlinedButton(
@@ -416,11 +416,11 @@ class MainActivity : ComponentActivity() {
                 OutlinedButton(
                     onClick = { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) },
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text("Zapnout plovoucí mikrofon") }
+                ) { Text("Enable floating microphone") }
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            Text("Rychlý styl", fontWeight = FontWeight.Bold)
+            Text("Quick style", fontWeight = FontWeight.Bold)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(UserSettings.CASUAL, UserSettings.BALANCED, UserSettings.PROFESSIONAL).forEach { style ->
                     FilterChip(
@@ -440,25 +440,25 @@ class MainActivity : ComponentActivity() {
                         selectedStyle = UserSettings.CUSTOM
                         UserSettings.save(this@MainActivity, currentProfile())
                     },
-                    label = { Text("Můj styl") },
+                    label = { Text("My style") },
                 )
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            Text("Místní text-to-speech", fontWeight = FontWeight.Bold)
+            Text("Local text-to-speech", fontWeight = FontWeight.Bold)
             OutlinedTextField(
                 value = speechText,
                 onValueChange = { speechText = it },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3,
             )
-            PrimaryButton("Přečíst") {
-                if (!speaker().speak(speechText)) toast("Není nainstalovaný offline hlas pro zvolený jazyk")
+            PrimaryButton("Read aloud") {
+                if (!speaker().speak(speechText)) toast("No offline voice is installed for the selected language")
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
             OutlinedButton(onClick = { screen = AppScreen.VOICE_LAB }, modifier = Modifier.fillMaxWidth()) {
-                Text(if (voiceReferenceReady) "Můj hlas • reference uložena" else "Můj hlas • Voice Lab")
+                Text(if (voiceReferenceReady) "My voice • reference saved" else "My voice • Voice Lab")
             }
             OutlinedButton(
                 onClick = {
@@ -466,11 +466,11 @@ class MainActivity : ComponentActivity() {
                     screen = AppScreen.ONBOARDING
                 },
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("Změnit jazyk nebo styl") }
+            ) { Text("Change language or style") }
 
             Text(
-                "LOCAL ONLY  •  AUDIO V RAM  •  HISTORIE VYPNUTÁ\n" +
-                    "Internet se používá jen pro jednorázové stažení ověřených modelů.",
+                "LOCAL ONLY  •  AUDIO IN RAM  •  HISTORY OFF\n" +
+                    "Internet is used only for the one-time download of verified models.",
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
@@ -487,29 +487,29 @@ class MainActivity : ComponentActivity() {
         var written by remember { mutableStateOf("") }
         var query by remember { mutableStateOf("") }
         var error by remember { mutableStateOf<String?>(null) }
-        AppPage("PERSONALIZACE", "Slovník", showNavigation = true) {
-            Text("Přesné tvary jmen, produktů a odborných výrazů. Oprava běží lokálně i v Raw režimu.")
-            OutlinedTextField(query, { query = it.take(100) }, Modifier.fillMaxWidth(), label = { Text("Hledat") })
+        AppPage("PERSONALIZATION", "Dictionary", showNavigation = true) {
+            Text("Exact forms for names, products, and technical terms. Corrections run locally, including in Raw mode.")
+            OutlinedTextField(query, { query = it.take(100) }, Modifier.fillMaxWidth(), label = { Text("Search") })
             val visible = dictionary.filter { query.isBlank() || it.spoken.contains(query, true) || it.written.contains(query, true) }
-            if (visible.isEmpty()) Text("Zatím tu nejsou žádné odpovídající výrazy.")
+            if (visible.isEmpty()) Text("No matching terms yet.")
             visible.forEach { entry ->
                 Column(Modifier.fillMaxWidth().background(Color.White).padding(12.dp)) {
                     Text(entry.written, fontWeight = FontWeight.Bold)
-                    Text("Když slyším: ${entry.spoken}", fontSize = 12.sp)
+                    Text("When heard: ${entry.spoken}", fontSize = 12.sp)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(onClick = { spoken = entry.spoken; written = entry.written }) { Text("Upravit") }
+                        OutlinedButton(onClick = { spoken = entry.spoken; written = entry.written }) { Text("Edit") }
                         OutlinedButton(onClick = {
                             dictionary = dictionary.filterNot { it == entry }
                             UserSettings.save(this@MainActivity, currentProfile())
-                        }) { Text("Smazat") }
+                        }) { Text("Delete") }
                     }
                 }
             }
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
-            Text("Přidat nebo upravit", fontWeight = FontWeight.Bold)
-            OutlinedTextField(spoken, { spoken = it.take(100) }, Modifier.fillMaxWidth(), label = { Text("Model slyší") })
-            OutlinedTextField(written, { written = it.take(200) }, Modifier.fillMaxWidth(), label = { Text("Má napsat") })
-            PrimaryButton("Uložit výraz", spoken.isNotBlank() && written.isNotBlank()) {
+            Text("Add or update", fontWeight = FontWeight.Bold)
+            OutlinedTextField(spoken, { spoken = it.take(100) }, Modifier.fillMaxWidth(), label = { Text("Model hears") })
+            OutlinedTextField(written, { written = it.take(200) }, Modifier.fillMaxWidth(), label = { Text("Write as") })
+            PrimaryButton("Save term", spoken.isNotBlank() && written.isNotBlank()) {
                 runCatching { Personalization.upsertDictionary(dictionary, DictionaryEntry(spoken, written)) }
                     .onSuccess {
                         dictionary = it
@@ -528,26 +528,26 @@ class MainActivity : ComponentActivity() {
         var trigger by remember { mutableStateOf("") }
         var text by remember { mutableStateOf("") }
         var error by remember { mutableStateOf<String?>(null) }
-        AppPage("PERSONALIZACE", "Snippets", showNavigation = true) {
-            Text("Řekni přesnou spoušť a Local Voice vloží uložený text. Běžná věta podobná spoušti se nerozbalí.")
-            if (snippets.isEmpty()) Text("Zatím nemáš uložený žádný snippet.")
+        AppPage("PERSONALIZATION", "Snippets", showNavigation = true) {
+            Text("Say an exact trigger and Local Voice inserts the saved text. Similar phrases will not expand.")
+            if (snippets.isEmpty()) Text("No snippets saved yet.")
             snippets.forEach { snippet ->
                 Column(Modifier.fillMaxWidth().background(Color.White).padding(12.dp)) {
                     Text(snippet.trigger, fontWeight = FontWeight.Bold)
                     Text(snippet.text, maxLines = 4)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(onClick = { trigger = snippet.trigger; text = snippet.text }) { Text("Upravit") }
+                        OutlinedButton(onClick = { trigger = snippet.trigger; text = snippet.text }) { Text("Edit") }
                         OutlinedButton(onClick = {
                             snippets = snippets.filterNot { it == snippet }
                             UserSettings.save(this@MainActivity, currentProfile())
-                        }) { Text("Smazat") }
+                        }) { Text("Delete") }
                     }
                 }
             }
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
-            OutlinedTextField(trigger, { trigger = it.take(60) }, Modifier.fillMaxWidth(), label = { Text("Hlasová spoušť") })
-            OutlinedTextField(text, { text = it.take(4_000) }, Modifier.fillMaxWidth(), minLines = 4, label = { Text("Vložený text") })
-            PrimaryButton("Uložit snippet", trigger.isNotBlank() && text.isNotBlank()) {
+            OutlinedTextField(trigger, { trigger = it.take(60) }, Modifier.fillMaxWidth(), label = { Text("Voice trigger") })
+            OutlinedTextField(text, { text = it.take(4_000) }, Modifier.fillMaxWidth(), minLines = 4, label = { Text("Inserted text") })
+            PrimaryButton("Save snippet", trigger.isNotBlank() && text.isNotBlank()) {
                 runCatching { Personalization.upsertSnippets(snippets, TextSnippet(trigger, text)) }
                     .onSuccess {
                         snippets = it
@@ -564,9 +564,9 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun SettingsScreen() {
         val locale = Locale.forLanguageTag(selectedLanguageTag)
-        AppPage("LOCAL VOICE", "Nastavení", showNavigation = true) {
-            StatusLine("Jazykový profil", true, languageName(locale))
-            Text("Úroveň čištění", fontWeight = FontWeight.Bold)
+        AppPage("LOCAL VOICE", "Settings", showNavigation = true) {
+            StatusLine("Speech language", true, languageName(locale))
+            Text("Cleanup level", fontWeight = FontWeight.Bold)
             CleanupLevel.entries.forEach { level ->
                 FilterChip(
                     selected = cleanupLevel == level,
@@ -577,11 +577,11 @@ class MainActivity : ComponentActivity() {
                     label = { Text(cleanupName(level)) },
                 )
             }
-            Text("Raw pouze opraví výrazy ze slovníku. Light upraví interpunkci. Polished řeší i přeřeknutí a opravy.")
+            Text("Raw applies dictionary terms only. Light fixes punctuation. Polished also handles restarts and corrections.")
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
-            Text("Plovoucí mikrofon", fontWeight = FontWeight.Bold)
-            Text("Velikost", fontSize = 12.sp)
+            Text("Floating microphone", fontWeight = FontWeight.Bold)
+            Text("Size", fontSize = 12.sp)
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 BubblePreferences.sizes.forEach { size ->
                     FilterChip(
@@ -591,7 +591,7 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             }
-            Text("Průhlednost", fontSize = 12.sp)
+            Text("Opacity", fontSize = 12.sp)
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 BubblePreferences.opacities.forEach { opacity ->
                     FilterChip(
@@ -603,16 +603,16 @@ class MainActivity : ComponentActivity() {
             }
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
-            PrimaryButton("Kalibrovat rozpoznávání hlasu") { screen = AppScreen.CALIBRATION }
+            PrimaryButton("Calibrate voice recognition") { screen = AppScreen.CALIBRATION }
             OutlinedButton(onClick = { screen = AppScreen.VOICE_LAB }, modifier = Modifier.fillMaxWidth()) {
                 Text("Voice Lab")
             }
             OutlinedButton(
                 onClick = { onboardingStep = 1; screen = AppScreen.ONBOARDING },
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("Změnit jazyk nebo styl") }
+            ) { Text("Change language or style") }
             Text(
-                "LOCAL ONLY • bez účtu • audio se po zpracování zahodí • historie je vypnutá",
+                "LOCAL ONLY • NO ACCOUNT • AUDIO DISCARDED AFTER PROCESSING • HISTORY OFF",
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
             )
@@ -623,37 +623,37 @@ class MainActivity : ComponentActivity() {
     private fun CalibrationScreen() {
         val language = Locale.forLanguageTag(selectedLanguageTag).language
         val report = calibrationReport
-        AppPage("KALIBRACE • ${language.uppercase()}", "Nauč Local Voice svůj hlas") {
-            Text("Čti přibližně 1–2 minuty. Nahrávka zůstane v RAM, lokální Whisper ji přepíše a aplikace nabídne potvrdit konkrétní záměny.")
+        AppPage("CALIBRATION • ${language.uppercase()}", "Teach Local Voice your speech") {
+            Text("Read for about 1–2 minutes. Audio stays in RAM. Local Whisper transcribes it and asks you to confirm specific substitutions.")
             Text(UserSettings.calibrationPrompt(language), modifier = Modifier.background(Color.White).padding(12.dp))
             PrimaryButton(
                 label = when {
-                    calibrationProcessing -> "Analyzuji lokálně…"
-                    calibrationRecording -> "Zastavit a analyzovat"
-                    else -> "Spustit kalibraci"
+                    calibrationProcessing -> "Analyzing locally…"
+                    calibrationRecording -> "Stop and analyze"
+                    else -> "Start calibration"
                 },
                 enabled = !calibrationProcessing && microphoneGranted && modelReady,
             ) {
                 if (calibrationRecording) stopCalibration() else startCalibration()
             }
-            if (!modelReady) ErrorText("Nejdřív stáhni Offline Pack.")
-            if (!microphoneGranted) ErrorText("Pro kalibraci je potřeba povolit mikrofon.")
+            if (!modelReady) ErrorText("Download the Offline Pack first.")
+            if (!microphoneGranted) ErrorText("Microphone permission is required for calibration.")
             calibrationError?.let { ErrorText(it) }
             if (report != null) {
-                StatusLine("Přesnost vzorku", true, "${report.baselineAccuracyPercent} %")
-                StatusLine("Po osobních opravách", true, "${report.correctedAccuracyPercent} %")
+                StatusLine("Sample accuracy", true, "${report.baselineAccuracyPercent} %")
+                StatusLine("After personal corrections", true, "${report.correctedAccuracyPercent} %")
                 Text(
-                    "Druhé číslo zahrnuje potvrzený slovník i nové návrhy na stejném vzorku; " +
-                        "nejde o dotrénování vah modelu.",
+                    "The second number applies confirmed dictionary terms and new suggestions to the same sample. " +
+                        "It does not mean the model weights were fine-tuned.",
                     fontSize = 12.sp,
                 )
                 if (report.suggestions.isEmpty()) {
-                    Text("Nenašel jsem žádnou novou bezpečnou záměnu k potvrzení.")
+                    Text("No new safe substitution was found.")
                 } else {
                     report.suggestions.forEach { suggestion ->
                         Text("${suggestion.spoken} → ${suggestion.written}")
                     }
-                    PrimaryButton("Přidat návrhy do slovníku") { acceptCalibration(report) }
+                    PrimaryButton("Add suggestions to dictionary") { acceptCalibration(report) }
                 }
             }
             OutlinedButton(
@@ -663,7 +663,7 @@ class MainActivity : ComponentActivity() {
                     screen = AppScreen.SETTINGS
                 },
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("Zpět") }
+            ) { Text("Back") }
         }
     }
 
@@ -672,43 +672,43 @@ class MainActivity : ComponentActivity() {
         var consent by remember { mutableStateOf(VoiceConsent.OWN_VOICE) }
         var confirmed by remember { mutableStateOf(false) }
         val language = Locale.forLanguageTag(selectedLanguageTag).language
-        AppPage("VOICE LAB • EXPERIMENT", "Vytvoř hlasovou referenci") {
-            Text("Nejde o trénování celého modelu. Ukládá se 10–30 sekund čistého hlasu pro budoucí zero-shot klonování.")
+        AppPage("VOICE LAB • EXPERIMENT", "Create a voice reference") {
+            Text("This does not train the full model. It stores 10–30 seconds of clean speech for possible future zero-shot cloning.")
             Text(UserSettings.voicePrompt(language), fontWeight = FontWeight.Bold)
-            Text("Nahraj v tiché místnosti, přirozeně a bez hudby.")
+            Text("Record naturally in a quiet room without music.")
 
             FilterChip(
                 selected = consent == VoiceConsent.OWN_VOICE,
                 onClick = { consent = VoiceConsent.OWN_VOICE },
-                label = { Text("Je to můj hlas") },
+                label = { Text("It is my voice") },
             )
             FilterChip(
                 selected = consent == VoiceConsent.EXPLICIT_PERMISSION,
                 onClick = { consent = VoiceConsent.EXPLICIT_PERMISSION },
-                label = { Text("Mám výslovný souhlas") },
+                label = { Text("I have explicit permission") },
             )
             Row(modifier = Modifier.fillMaxWidth()) {
                 Checkbox(checked = confirmed, onCheckedChange = { confirmed = it })
-                Text("Potvrzuji oprávnění tento hlas uložit a klonovat.", modifier = Modifier.padding(top = 12.dp))
+                Text("I confirm that I may store and clone this voice.", modifier = Modifier.padding(top = 12.dp))
             }
 
             if (!microphoneGranted) {
                 OutlinedButton(
                     onClick = { permissionLauncher.launch(Manifest.permission.RECORD_AUDIO) },
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text("Povolit mikrofon") }
+                ) { Text("Allow microphone") }
             }
             PrimaryButton(
-                label = if (voiceRecording) "Zastavit a uložit" else "Nahrát hlasovou referenci",
+                label = if (voiceRecording) "Stop and save" else "Record voice reference",
                 enabled = confirmed && microphoneGranted,
             ) {
                 if (voiceRecording) stopVoiceRecording(consent) else startVoiceRecording(consent)
             }
             voiceError?.let { ErrorText(it) }
-            StatusLine("Lokální reference", voiceReferenceReady, if (voiceReferenceReady) "Uložena" else "Chybí")
+            StatusLine("Local reference", voiceReferenceReady, if (voiceReferenceReady) "Saved" else "Missing")
             if (voiceReferenceReady) {
                 OutlinedButton(onClick = ::playVoiceReference, modifier = Modifier.fillMaxWidth()) {
-                    Text("Přehrát referenci")
+                    Text("Play reference")
                 }
                 OutlinedButton(
                     onClick = {
@@ -716,12 +716,12 @@ class MainActivity : ComponentActivity() {
                         voiceReferenceReady = false
                     },
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text("Smazat hlasová data") }
+                ) { Text("Delete voice data") }
             }
 
             Text(
-                "Syntéza vlastním hlasem zůstává zamčená, dokud Android engine neprojde českým benchmarkem. " +
-                    "Současný PocketTTS/ZipVoice nemá ověřenou češtinu.",
+                "Personal voice synthesis stays locked until an Android engine passes the Czech benchmark. " +
+                    "PocketTTS and ZipVoice do not have verified Czech support.",
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color.White)
@@ -737,7 +737,7 @@ class MainActivity : ComponentActivity() {
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Zpět")
+                Text("Back")
             }
         }
     }
@@ -762,10 +762,10 @@ class MainActivity : ComponentActivity() {
                             }
                             text.toString()
                         }
-                    } ?: error("Soubor nelze otevřít")
+                    } ?: error("The file cannot be opened")
                 }
             }.onSuccess { writingSample = it }
-                .onFailure { documentError = it.message ?: "Soubor nelze načíst" }
+                .onFailure { documentError = it.message ?: "The file cannot be loaded" }
         }
     }
 
@@ -775,7 +775,7 @@ class MainActivity : ComponentActivity() {
         runCatching {
             calibrationCapture.start(this, lifecycleScope, ::stopCalibration)
             calibrationRecording = true
-        }.onFailure { calibrationError = it.message ?: "Kalibraci nelze spustit" }
+        }.onFailure { calibrationError = it.message ?: "Calibration cannot start" }
     }
 
     private fun stopCalibration() {
@@ -786,7 +786,7 @@ class MainActivity : ComponentActivity() {
             runCatching {
                 val samples = calibrationCapture.stop()
                 require(samples.size >= AudioCapture.SAMPLE_RATE * 30) {
-                    "Pro spolehlivou kalibraci čti alespoň 30 sekund"
+                    "Read for at least 30 seconds for reliable calibration"
                 }
                 val speech = SpeechGate().trim(samples, AudioCapture.SAMPLE_RATE)
                 withContext(Dispatchers.Default) {
@@ -801,7 +801,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }.onSuccess { calibrationReport = it }
-                .onFailure { calibrationError = it.message ?: "Kalibrace selhala" }
+                .onFailure { calibrationError = it.message ?: "Calibration failed" }
             calibrationProcessing = false
         }
     }
@@ -813,7 +813,7 @@ class MainActivity : ComponentActivity() {
             dictionary = it
             UserSettings.save(this, currentProfile())
             calibrationReport = report.copy(suggestions = emptyList())
-            toast("Potvrzené opravy byly přidány do slovníku")
+            toast("Confirmed corrections were added to the dictionary")
         }.onFailure { calibrationError = it.message }
     }
 
@@ -827,7 +827,7 @@ class MainActivity : ComponentActivity() {
         runCatching {
             voiceCapture.start(this, lifecycleScope) { stopVoiceRecording(consent) }
             voiceRecording = true
-        }.onFailure { voiceError = it.message ?: "Nahrávání nelze spustit" }
+        }.onFailure { voiceError = it.message ?: "Recording cannot start" }
     }
 
     private fun stopVoiceRecording(consent: VoiceConsent) {
@@ -841,9 +841,9 @@ class MainActivity : ComponentActivity() {
                 }
             }.onSuccess {
                 voiceReferenceReady = true
-                toast("Hlasová reference byla uložena lokálně")
+                toast("Voice reference saved locally")
             }.onFailure {
-                voiceError = it.message ?: "Hlasovou referenci nelze uložit"
+                voiceError = it.message ?: "Voice reference cannot be saved"
             }
         }
     }
@@ -860,7 +860,7 @@ class MainActivity : ComponentActivity() {
                 }
                 start()
             }
-        }.onFailure { toast("Referenci nelze přehrát") }
+        }.onFailure { toast("Voice reference cannot be played") }
     }
 
     @Composable
@@ -894,10 +894,10 @@ class MainActivity : ComponentActivity() {
     private fun AppNavigation() {
         NavigationBar(containerColor = Color.White) {
             listOf(
-                Triple(AppScreen.HOME, "⌂", "Domů"),
-                Triple(AppScreen.DICTIONARY, "Aa", "Slovník"),
+                Triple(AppScreen.HOME, "⌂", "Home"),
+                Triple(AppScreen.DICTIONARY, "Aa", "Dictionary"),
                 Triple(AppScreen.SNIPPETS, "§", "Snippets"),
-                Triple(AppScreen.SETTINGS, "⚙", "Nastavení"),
+                Triple(AppScreen.SETTINGS, "⚙", "Settings"),
             ).forEach { (target, icon, label) ->
                 NavigationBarItem(
                     selected = screen == target,
@@ -929,8 +929,8 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun NavigationButtons(onBack: () -> Unit, onNext: () -> Unit) {
-        PrimaryButton("Pokračovat", onClick = onNext)
-        OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Zpět") }
+        PrimaryButton("Continue", onClick = onNext)
+        OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }
     }
 
     @Composable
@@ -944,17 +944,17 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun ErrorText(value: String) = Text(value, color = Color(0xFFB00020))
 
-    private fun languageName(locale: Locale): String = locale.getDisplayName(locale)
-        .replaceFirstChar { if (it.isLowerCase()) it.titlecase(locale) else it.toString() }
+    private fun languageName(locale: Locale): String = locale.getDisplayName(Locale.ENGLISH)
+        .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ENGLISH) else it.toString() }
 
     private fun toast(message: String) = Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
 
     private fun speaker(): TtsSpeaker = tts ?: TtsSpeaker(this).also { tts = it }
 
     private fun cleanupName(level: CleanupLevel): String = when (level) {
-        CleanupLevel.RAW -> "Raw • jen slovník"
-        CleanupLevel.LIGHT -> "Light • lehká úprava"
-        CleanupLevel.POLISHED -> "Polished • sémantické opravy"
+        CleanupLevel.RAW -> "Raw • dictionary only"
+        CleanupLevel.LIGHT -> "Light • punctuation cleanup"
+        CleanupLevel.POLISHED -> "Polished • semantic cleanup"
     }
 
     private enum class AppScreen { ONBOARDING, HOME, DICTIONARY, SNIPPETS, SETTINGS, CALIBRATION, VOICE_LAB }

@@ -1,5 +1,22 @@
 # Android QA record
 
+## 0.4.0 candidate - 2026-08-25
+
+- 47 JVM tests passed; zero failures and zero skips.
+- Android lint passed with zero errors and seven warnings.
+- Debug APK and Android test APK assembled in a clean 84-task gate.
+- Clean install opened an English onboarding flow with English selected by default.
+- The picker displayed English, Czech, German, French, and Spanish on an English-locale API 35 AVD.
+- Selecting Czech kept the UI in English and loaded Czech writing-style examples.
+- Legacy Czech style and writing-sample data survived a Czech to English to Czech language round trip in instrumentation.
+- Existing suffixed cleanup, dictionary, and snippet data survived the same migration test.
+- Home, Dictionary, Settings, custom-style onboarding, and the accessibility disclosure rendered in English.
+- Source scan found Czech only in intentional Czech speech samples and semantic few-shots.
+- APK: 61,515,804 bytes; SHA-256 `b45326a3c9827a548978a18dbc0b6a8b16483ecf7a4fbc9e1da86687d634c1b6`.
+- Package `cz.localvoice.app`, version `0.4.0` (`6`), minimum API 26, target API 36.
+- APK Signature Scheme v2 verified with the Android debug certificate.
+- Exact release APK installed and launched to a resumed `MainActivity` on the isolated `LocalVoice_English_QA_API35_25Aug` AVD.
+
 ## 0.3.2 candidate - 2026-08-22
 
 - 44 JVM tests passed; zero failures and zero skips.
