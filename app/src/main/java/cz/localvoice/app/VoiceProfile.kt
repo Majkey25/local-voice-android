@@ -5,6 +5,7 @@ import androidx.core.content.edit
 import java.io.BufferedOutputStream
 import java.io.DataOutputStream
 import java.io.File
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import kotlin.math.abs
@@ -42,12 +43,17 @@ object VoiceProfileStore {
     }
 
     fun delete(context: Context) {
-        val reference = referenceFile(context)
-        reference.delete()
-        reference.parentFile?.let { File(it, "reference.wav.part").delete() }
+        deleteFiles(referenceFile(context))
         context.getSharedPreferences(VoiceAccessibilityService.PREFERENCES, Context.MODE_PRIVATE).edit {
             remove("voice_consent")
             remove("voice_consent_at")
+        }
+    }
+
+    internal fun deleteFiles(reference: File) {
+        val partial = File(reference.parentFile, "reference.wav.part")
+        for (file in listOf(reference, partial)) {
+            if (file.exists() && !file.delete()) throw IOException("Voice data could not be deleted")
         }
     }
 }
