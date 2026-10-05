@@ -1,0 +1,23 @@
+Local Voice third-party notices
+
+This APK includes APACHE-2.0.txt and WHISPER-MIT.txt alongside this file.
+
+sherpa-onnx 1.13.6, k2-fsa contributors, Apache License 2.0.
+https://github.com/k2-fsa/sherpa-onnx
+
+LiteRT-LM 0.16.1, Google AI Edge contributors, Apache License 2.0.
+https://github.com/google-ai-edge/LiteRT-LM
+
+Whisper Tiny model, Copyright (c) 2022 OpenAI, MIT License.
+https://github.com/openai/whisper
+
+Qwen3-0.6B model, Qwen team, Apache License 2.0.
+LiteRT conversion by litert-community.
+https://huggingface.co/Qwen/Qwen3-0.6B
+https://huggingface.co/litert-community/Qwen3-0.6B
+
+AndroidX and Kotlin components retain their upstream Apache 2.0 notices.
+https://source.android.com/docs/setup/about/licenses
+https://github.com/JetBrains/kotlin
+
+Model files are downloaded separately, not embedded in this APK.

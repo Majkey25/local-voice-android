@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Local Voice · Privacy and terms</title>
+  <style>
+    body { max-width: 48rem; margin: 2rem auto; padding: 0 1.25rem; font: 1.05rem/1.6 system-ui, sans-serif; color: #202020; background: #fff; }
+    a { color: #164c9b; } a:focus-visible { outline: 3px solid #164c9b; outline-offset: 4px; }
+    h1, h2 { line-height: 1.25; } nav { display: flex; flex-wrap: wrap; gap: 1rem; } li { margin-bottom: .6rem; }
+  </style>
+</head>
+<body>
+<header><h1>Local Voice</h1><p>Privacy policy and terms · Updated 5 October 2026</p>
+<nav aria-label="Legal sections"><a href="#privacy">Privacy</a><a href="#delete">Delete data</a><a href="#terms">Terms</a><a href="#licenses">Licenses</a></nav></header>
+<main>
+<section id="privacy"><h2>Privacy policy</h2>
+<p>Local Voice, Android package <code>cz.localvoice.app</code>, is published by Matěj Teplý, developer name Majkey. Contact: <a href="mailto:majkeylab@gmail.com">majkeylab@gmail.com</a>.</p>
+<p>The app has no user account, advertising, analytics SDK or developer-operated cloud service. Dictation and text cleanup run on the phone. The microphone records only when you start dictation, calibration or an optional Voice Lab reference.</p>
+<ul>
+<li><strong>Accessibility:</strong> after your in-app agreement and Android permission, the floating microphone inspects the active text field and selection, inserts the result into that field, and briefly keeps text needed for Undo. Password, PIN, numeric and phone fields are blocked. Selected text may be processed by the local semantic model. This information is not sent to the developer.</li>
+<li><strong>Audio and text:</strong> ordinary dictation and recognition-calibration audio is held in memory while processing. Imported writing samples, dictionary entries, snippets, language/style settings and confirmed calibration corrections are stored privately on the device.</li>
+<li><strong>Optional Voice Lab:</strong> a reference recording is saved as a WAV file on this phone only after you confirm that it is your voice or you have permission. It remains until you delete it. Personal voice synthesis is currently unavailable; saving a sample does not train or fine-tune a model.</li>
+<li><strong>Network:</strong> the Offline Pack downloads verified Whisper and Qwen model files from Hugging Face. The host receives your IP address and normal request information, not your dictation, writing sample or voice reference. See <a href="https://huggingface.co/privacy">Hugging Face privacy</a>. Text-to-speech selects installed voices marked as offline by the Android voice engine.</li>
+</ul>
+<p>App data is excluded from Android backup. Text you insert or copy into another app becomes subject to that app's handling. This general-purpose tool is not directed at children and does not create child profiles. Only process recordings and text you are entitled to use.</p>
+</section>
+<section id="delete"><h2>Withdrawal, retention and deletion</h2>
+<p>Stop dictation using the floating control. Revoke microphone permission or disable Local Voice in Android Settings → Accessibility to stop that access. The app retains settings and optional saved content until you remove them or clear app storage.</p>
+<p>Use Voice Lab → Delete voice data to remove the saved reference. Dictionary and snippet entries can be edited or removed in their screens. To erase all writing samples, voice files, models, consent records and settings, use Android Settings → Apps → Local Voice → Storage → Clear storage, or uninstall. Imported source files and text already inserted into other apps remain there; delete those copies separately. There is no Local Voice account to delete.</p>
+<p>The developer cannot remotely read or erase your phone. For support correspondence or a privacy request, email <a href="mailto:majkeylab@gmail.com?subject=Local%20Voice%20privacy%20request">majkeylab@gmail.com</a>. Do not send private recordings or writing samples unless needed for a support request you choose to make.</p>
+<p>Your email address and message are received by the developer and email provider to handle your request. The basis is the legitimate interest in answering support requests, or a legal obligation when handling statutory requests. Correspondence is retained only while needed to resolve the request, a related dispute or a legal duty. You may request access, correction, deletion, restriction, portability or object where applicable, and complain to a data protection authority such as the <a href="https://uoou.gov.cz/">Czech Office for Personal Data Protection</a>.</p>
+</section>
+<section id="terms"><h2>Terms and costs</h2>
+<p>The developer provides Local Voice without a purchase, subscription or in-app billing. Model downloads may use your network allowance. There is no app payment to refund. Statutory consumer rights are unaffected.</p>
+<p>Review dictated and rewritten text before sending it. Recognition and AI cleanup can make mistakes. Use the app lawfully and obtain permission for other people's recordings. Source code is available under its MIT license, and third-party components retain their own licenses. Nothing here excludes rights or liability that applicable law does not allow to be excluded.</p>
+</section>
+<section><h2>This website and cookies</h2>
+<p>This static page uses no cookies, tracking, forms, advertising scripts or external fonts. GitHub Pages may process IP addresses and request logs to deliver and secure the page under <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a>.</p></section>
+<section id="licenses"><h2>Software and model credits</h2>
+<p>App source: <a href="https://github.com/Majkey25/local-voice-android/blob/main/LICENSE">MIT license</a>. The UI uses system fonts and repository vector artwork.</p>
+<ul>
+<li><a href="https://github.com/k2-fsa/sherpa-onnx/blob/v1.13.6/LICENSE">sherpa-onnx</a>, Apache 2.0 speech runtime.</li>
+<li><a href="https://github.com/openai/whisper/blob/main/LICENSE">OpenAI Whisper</a>, MIT model and software.</li>
+<li><a href="https://huggingface.co/Qwen/Qwen3-0.6B">Qwen3-0.6B</a>, Apache 2.0 model, distributed as a <a href="https://huggingface.co/litert-community/Qwen3-0.6B">LiteRT conversion</a>.</li>
+<li><a href="https://github.com/google-ai-edge/LiteRT-LM/blob/main/LICENSE">Google LiteRT-LM</a>, Apache 2.0 runtime.</li>
+<li><a href="https://source.android.com/docs/setup/about/licenses">AndroidX / Android Open Source Project</a>, applicable component licenses including Apache 2.0.</li>
+</ul>
+</section>
+</main>
+<footer><p><a href="https://github.com/Majkey25/local-voice-android">Source and releases</a> · <a href="mailto:majkeylab@gmail.com">Contact the developer</a></p></footer>
+</body></html>

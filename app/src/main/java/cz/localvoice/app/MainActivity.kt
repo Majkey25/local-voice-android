@@ -4,6 +4,7 @@ import android.Manifest
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.ComponentName
 import android.content.Intent
+import android.content.ActivityNotFoundException
 import android.content.pm.PackageManager
 import android.media.MediaPlayer
 import android.net.Uri
@@ -41,6 +42,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -81,6 +83,7 @@ class MainActivity : ComponentActivity() {
     private var downloadError by mutableStateOf<String?>(null)
     private var documentError by mutableStateOf<String?>(null)
     private var voiceRecording by mutableStateOf(false)
+    private var voiceDataBusy by mutableStateOf(false)
     private var voiceReferenceReady by mutableStateOf(false)
     private var voiceError by mutableStateOf<String?>(null)
     private val voiceCapture = AudioCapture(maxDurationSeconds = 30)
@@ -217,7 +220,7 @@ class MainActivity : ComponentActivity() {
                 Text("A local voice layer for your whole phone. No account, no cloud, no keyboard replacement.")
                 Feature("Voice → text", "Local transcription and semantic cleanup")
                 Feature("Text → voice", "Installed offline voices only")
-                Feature("Privacy", "Audio stays in RAM, history is off")
+                Feature("Privacy", "Dictation audio stays in RAM. Optional Voice Lab references are saved only on this phone.")
                 Spacer(Modifier.height(12.dp))
                 PrimaryButton("Get started") { onboardingStep = 1 }
             }
@@ -469,7 +472,7 @@ class MainActivity : ComponentActivity() {
             ) { Text("Change language or style") }
 
             Text(
-                "LOCAL ONLY  •  AUDIO IN RAM  •  HISTORY OFF\n" +
+                "LOCAL ONLY  •  DICTATION AUDIO IN RAM\nOptional voice references are saved locally.\n" +
                     "Internet is used only for the one-time download of verified models.",
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
@@ -700,21 +703,33 @@ class MainActivity : ComponentActivity() {
             }
             PrimaryButton(
                 label = if (voiceRecording) "Stop and save" else "Record voice reference",
-                enabled = confirmed && microphoneGranted,
+                enabled = confirmed && microphoneGranted && !voiceDataBusy,
             ) {
                 if (voiceRecording) stopVoiceRecording(consent) else startVoiceRecording(consent)
             }
             voiceError?.let { ErrorText(it) }
             StatusLine("Local reference", voiceReferenceReady, if (voiceReferenceReady) "Saved" else "Missing")
             if (voiceReferenceReady) {
-                OutlinedButton(onClick = ::playVoiceReference, modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(onClick = ::playVoiceReference, enabled = !voiceDataBusy,
+                    modifier = Modifier.fillMaxWidth()) {
                     Text("Play reference")
                 }
                 OutlinedButton(
                     onClick = {
-                        VoiceProfileStore.delete(this@MainActivity)
-                        voiceReferenceReady = false
+                        voiceDataBusy = true
+                        lifecycleScope.launch {
+                            runCatching {
+                                withContext(Dispatchers.IO) { VoiceProfileStore.delete(this@MainActivity) }
+                            }.onSuccess {
+                                mediaPlayer?.release()
+                                mediaPlayer = null
+                                voiceReferenceReady = false
+                                voiceError = null
+                            }.onFailure { voiceError = "Voice data could not be deleted. Try again." }
+                            voiceDataBusy = false
+                        }
                     },
+                    enabled = !voiceRecording && !voiceDataBusy,
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text("Delete voice data") }
             }
@@ -823,6 +838,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun startVoiceRecording(consent: VoiceConsent) {
+        if (voiceDataBusy) return
         voiceError = null
         runCatching {
             voiceCapture.start(this, lifecycleScope) { stopVoiceRecording(consent) }
@@ -833,6 +849,7 @@ class MainActivity : ComponentActivity() {
     private fun stopVoiceRecording(consent: VoiceConsent) {
         if (!voiceRecording) return
         voiceRecording = false
+        voiceDataBusy = true
         lifecycleScope.launch {
             runCatching {
                 val samples = voiceCapture.stop()
@@ -845,6 +862,7 @@ class MainActivity : ComponentActivity() {
             }.onFailure {
                 voiceError = it.message ?: "Voice reference cannot be saved"
             }
+            voiceDataBusy = false
         }
     }
 
@@ -886,6 +904,14 @@ class MainActivity : ComponentActivity() {
                 Text(eyebrow, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 Text(title, fontSize = 34.sp, fontWeight = FontWeight.Bold)
                 content()
+                TextButton(onClick = {
+                    try {
+                        startActivity(Intent(Intent.ACTION_VIEW,
+                            Uri.parse("https://majkey25.github.io/local-voice-android/")))
+                    } catch (_: ActivityNotFoundException) {
+                        toast("No browser available. Contact majkeylab@gmail.com for the policy.")
+                    }
+                }) { Text("Privacy, terms and data deletion") }
             }
         }
     }
