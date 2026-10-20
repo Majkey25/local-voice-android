@@ -206,7 +206,7 @@ internal fun <T : AutoCloseable> initializeSemanticEngine(
             initialize(engine)
             engine
         } catch (error: Throwable) {
-            engine.close()
+            runCatching { engine.close() }.onFailure(error::addSuppressed)
             throw error
         }
     }

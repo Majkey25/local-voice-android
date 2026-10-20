@@ -62,8 +62,47 @@ class SemanticInitializationTest {
         assertTrue(created.single().closed)
     }
 
-    private class TestEngine(val cpu: Boolean) : AutoCloseable {
+    @Test
+    fun `failed initialization keeps its error when closing an uninitialized engine also fails`() {
+        for (cpuOnly in listOf(false, true)) {
+            val created = mutableListOf<TestEngine>()
+            val error = IllegalStateException("CPU initialization failed")
+            val closeError = IllegalStateException("Engine is not initialized.")
+            val thrown = assertFailsWith<IllegalStateException> {
+                initializeSemanticEngine(cpuOnly, { true }, {
+                    TestEngine(it, closeError).also(created::add)
+                }) {
+                    if (it.cpu) throw error else error("GPU initialization failed")
+                }
+            }
+            assertSame(error, thrown)
+            assertEquals(listOf(closeError), thrown.suppressed.toList())
+            assertEquals(if (cpuOnly) listOf(true) else listOf(false, true), created.map { it.cpu })
+            assertTrue(created.none { it.closed })
+        }
+    }
+
+    @Test
+    fun `constructor failure propagates without initialization or fallback`() {
+        for (cpuOnly in listOf(false, true)) {
+            val requested = mutableListOf<Boolean>()
+            val error = IllegalStateException("Engine construction failed")
+            val thrown = assertFailsWith<IllegalStateException> {
+                initializeSemanticEngine<TestEngine>(cpuOnly, { true }, {
+                    requested += it
+                    throw error
+                }) { error("Unconstructed engine must not initialize") }
+            }
+            assertSame(error, thrown)
+            assertEquals(listOf(cpuOnly), requested)
+        }
+    }
+
+    private class TestEngine(val cpu: Boolean, val closeError: Throwable? = null) : AutoCloseable {
         var closed = false
-        override fun close() { closed = true }
+        override fun close() {
+            closeError?.let { throw it }
+            closed = true
+        }
     }
 }
