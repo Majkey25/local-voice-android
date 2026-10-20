@@ -36,7 +36,14 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.max
 import kotlin.math.min
 
-class AudioCapture(private val maxDurationSeconds: Int = 120) {
+class AudioCapture internal constructor(
+    private val maxDurationSeconds: Int,
+    private val minBufferSize: () -> Int,
+) {
+    constructor(maxDurationSeconds: Int = 120) : this(maxDurationSeconds, {
+        AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL, ENCODING)
+    })
+
     private val running = AtomicBoolean(false)
     private val chunks = mutableListOf<ShortArray>()
     private var recorder: AudioRecord? = null
@@ -51,57 +58,46 @@ class AudioCapture(private val maxDurationSeconds: Int = 120) {
 
     fun start(context: Context, scope: CoroutineScope, onLimit: () -> Unit) {
         check(running.compareAndSet(false, true)) { "Recording is already active" }
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) !=
-            PackageManager.PERMISSION_GRANTED
-        ) {
-            running.set(false)
-            error("Microphone permission is not granted")
-        }
-        chunks.clear()
-        captureError = null
-        val minBuffer = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL, ENCODING)
-        check(minBuffer > 0) { "No usable microphone configuration" }
-        val audioRecord = try {
-            AudioRecord(
+        try {
+            check(
+                ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) ==
+                    PackageManager.PERMISSION_GRANTED,
+            ) { "Microphone permission is not granted" }
+            chunks.clear()
+            captureError = null
+            val minBuffer = minBufferSize()
+            check(minBuffer > 0) { "No usable microphone configuration" }
+            val audioRecord = AudioRecord(
                 MediaRecorder.AudioSource.VOICE_RECOGNITION,
                 SAMPLE_RATE,
                 CHANNEL,
                 ENCODING,
                 max(minBuffer * 2, 16_000),
             )
-        } catch (error: RuntimeException) {
-            running.set(false)
-            throw error
-        }
-        if (audioRecord.state != AudioRecord.STATE_INITIALIZED) {
-            audioRecord.release()
-            running.set(false)
-            error("Microphone initialization failed")
-        }
-        recorder = audioRecord
-        try {
+            recorder = audioRecord
+            check(audioRecord.state == AudioRecord.STATE_INITIALIZED) { "Microphone initialization failed" }
             audioRecord.startRecording()
-        } catch (error: RuntimeException) {
-            cancel()
-            throw error
-        }
-        captureJob = scope.launch(Dispatchers.IO) {
-            val buffer = ShortArray(max(minBuffer / 2, 4_096))
-            var samples = 0
-            while (running.get()) {
-                val read = audioRecord.read(buffer, 0, buffer.size)
-                if (read <= 0) {
-                    if (running.get()) captureError = "Microphone read failed: $read"
-                    break
-                }
-                val accepted = min(read, AudioCapture.SAMPLE_RATE * maxDurationSeconds - samples)
-                chunks += buffer.copyOf(accepted)
-                samples += accepted
-                if (samples >= AudioCapture.SAMPLE_RATE * maxDurationSeconds) {
-                    running.set(false)
-                    launch(Dispatchers.Main) { onLimit() }
+            captureJob = scope.launch(Dispatchers.IO) {
+                val buffer = ShortArray(max(minBuffer / 2, 4_096))
+                var samples = 0
+                while (running.get()) {
+                    val read = audioRecord.read(buffer, 0, buffer.size)
+                    if (read <= 0) {
+                        if (running.get()) captureError = "Microphone read failed: $read"
+                        break
+                    }
+                    val accepted = min(read, AudioCapture.SAMPLE_RATE * maxDurationSeconds - samples)
+                    chunks += buffer.copyOf(accepted)
+                    samples += accepted
+                    if (samples >= AudioCapture.SAMPLE_RATE * maxDurationSeconds) {
+                        running.set(false)
+                        launch(Dispatchers.Main) { onLimit() }
+                    }
                 }
             }
+        } catch (error: Throwable) {
+            cancel()
+            throw error
         }
     }
 
@@ -199,6 +195,40 @@ object AudioChunks {
     }
 }
 
+internal fun <T : AutoCloseable> initializeSemanticEngine(
+    cpuOnly: Boolean,
+    hasCpuCapacity: () -> Boolean,
+    create: (Boolean) -> T,
+    initialize: (T) -> Unit,
+): T {
+    fun start(engine: T): T {
+        return try {
+            initialize(engine)
+            engine
+        } catch (error: Throwable) {
+            runCatching { engine.close() }.onFailure(error::addSuppressed)
+            throw error
+        }
+    }
+    require(!cpuOnly || hasCpuCapacity()) { "Not enough memory for local semantic editing" }
+    val primary = create(cpuOnly)
+    return try {
+        start(primary)
+    } catch (error: Throwable) {
+        if (cpuOnly || !hasCpuCapacity()) throw error
+        start(create(true))
+    }
+}
+
+private const val MIN_CPU_TOTAL_RAM = 6L * 1_024 * 1_024 * 1_024
+private const val MIN_CPU_AVAILABLE_RAM = 3L * 1_024 * 1_024 * 1_024
+
+internal fun hasCpuCapacity(context: Context): Boolean {
+    val info = ActivityManager.MemoryInfo()
+    context.getSystemService(ActivityManager::class.java).getMemoryInfo(info)
+    return info.totalMem >= MIN_CPU_TOTAL_RAM && info.availMem >= MIN_CPU_AVAILABLE_RAM
+}
+
 class SemanticEngine(private val context: Context) : AutoCloseable {
     private var engine: Engine? = null
     private var cpuOnly = Build.SUPPORTED_ABIS.firstOrNull() != "arm64-v8a"
@@ -242,30 +272,22 @@ class SemanticEngine(private val context: Context) : AutoCloseable {
 
     private fun getEngine(): Engine {
         engine?.let { return it }
-        require(!cpuOnly || hasCpuCapacity(context)) { "Not enough memory for local semantic editing" }
         val modelPath = ModelPack.file(context, "semantic-qwen3-0.6b.litertlm").path
-        val backend = if (cpuOnly) Backend.CPU() else Backend.GPU()
-        val primary = Engine(
-            EngineConfig(
-                modelPath = modelPath,
-                backend = backend,
-                cacheDir = context.cacheDir.path,
-            ),
+        engine = initializeSemanticEngine(
+            cpuOnly = cpuOnly,
+            hasCpuCapacity = { hasCpuCapacity(context) },
+            create = { useCpu ->
+                cpuOnly = useCpu
+                Engine(
+                    EngineConfig(
+                        modelPath = modelPath,
+                        backend = if (useCpu) Backend.CPU() else Backend.GPU(),
+                        cacheDir = context.cacheDir.path,
+                    ),
+                )
+            },
+            initialize = Engine::initialize,
         )
-        engine = runCatching {
-            primary.initialize()
-            primary
-        }.getOrElse {
-            primary.close()
-            cpuOnly = true
-            Engine(
-                EngineConfig(
-                    modelPath = modelPath,
-                    backend = Backend.CPU(),
-                    cacheDir = context.cacheDir.path,
-                ),
-            ).also(Engine::initialize)
-        }
         return requireNotNull(engine)
     }
 
@@ -279,17 +301,8 @@ class SemanticEngine(private val context: Context) : AutoCloseable {
         .joinToString("") { it.text }
 
     companion object {
-        private const val MIN_CPU_TOTAL_RAM = 6L * 1_024 * 1_024 * 1_024
-        private const val MIN_CPU_AVAILABLE_RAM = 3L * 1_024 * 1_024 * 1_024
-
         fun isAvailable(context: Context): Boolean =
             Build.SUPPORTED_ABIS.firstOrNull() == "arm64-v8a" || hasCpuCapacity(context)
-
-        private fun hasCpuCapacity(context: Context): Boolean {
-            val info = ActivityManager.MemoryInfo()
-            context.getSystemService(ActivityManager::class.java).getMemoryInfo(info)
-            return info.totalMem >= MIN_CPU_TOTAL_RAM && info.availMem >= MIN_CPU_AVAILABLE_RAM
-        }
 
         private const val SYSTEM_PROMPT = """
 Compute the final text the user intends after all spoken corrections.
