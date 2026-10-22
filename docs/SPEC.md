@@ -15,7 +15,7 @@ An installable Android APK whose primary flow is:
 - Reject cloud inference and cleartext traffic.
 - Refuse secure/password fields.
 - Insert only when the focused field still matches the captured snapshot.
-- Keep a clipboard fallback and one-step bounded undo.
+- Keep a clipboard fallback that requires an explicit Copy action, marks approved copies sensitive, and discards its private preview after one minute. Keep one-step bounded undo.
 - Read user text with an installed Android TTS voice for the selected speech language.
 - Keep transcript/audio history off.
 - Keep independent cleanup, dictionary, snippets, and calibration data per language profile.

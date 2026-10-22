@@ -74,14 +74,14 @@ object ModelPack {
         File(directory, "ready").writeText(version)
     }
 
-    private fun downloadFile(model: ModelFile, destination: File, onProgress: (Long) -> Unit) {
+    internal fun downloadFile(model: ModelFile, destination: File, onProgress: (Long) -> Unit) {
         val partial = File(destination.parentFile, "${destination.name}.part")
         if (partial.matches(model)) {
             require(partial.renameTo(destination)) { "Could not finalize model download" }
             onProgress(model.size)
             return
         }
-        if (partial.length() >= model.size) partial.delete()
+        if (partial.length() >= model.size) require(partial.delete()) { "Could not remove invalid partial model" }
         val existingBytes = partial.length()
         val connection = (URL(model.url).openConnection() as HttpURLConnection).apply {
             connectTimeout = 30_000
@@ -91,9 +91,19 @@ object ModelPack {
             if (existingBytes > 0) setRequestProperty("Range", "bytes=$existingBytes-")
         }
         try {
-            require(connection.responseCode in 200..299) { "Download failed: HTTP ${connection.responseCode}" }
+            check(connection.responseCode in setOf(HttpURLConnection.HTTP_OK, HttpURLConnection.HTTP_PARTIAL)) {
+                "Download failed: HTTP ${connection.responseCode}"
+            }
             val append = existingBytes > 0 && connection.responseCode == HttpURLConnection.HTTP_PARTIAL
-            if (!append) partial.delete()
+            val offset = if (append) existingBytes else 0L
+            if (connection.responseCode == HttpURLConnection.HTTP_PARTIAL) {
+                require(connection.getHeaderField("Content-Range") == "bytes $offset-${model.size - 1}/${model.size}") {
+                    "Invalid model download range"
+                }
+            }
+            require(connection.contentLengthLong == -1L || connection.contentLengthLong == model.size - offset) {
+                "Unexpected model download length"
+            }
             connection.inputStream.use { input ->
                 FileOutputStream(partial, append).buffered().use { output ->
                     val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
@@ -101,6 +111,7 @@ object ModelPack {
                     while (true) {
                         val read = input.read(buffer)
                         if (read < 0) break
+                        require(read.toLong() <= model.size - written) { "Model download exceeds expected size" }
                         output.write(buffer, 0, read)
                         written += read
                         onProgress(written)
@@ -111,10 +122,13 @@ object ModelPack {
                 partial.delete()
                 error("Downloaded model failed size or SHA-256 verification")
             }
-            require(partial.renameTo(destination)) { "Could not finalize model download" }
+        } catch (error: IllegalArgumentException) {
+            if (partial.exists()) require(partial.delete()) { "Could not remove invalid partial model" }
+            throw error
         } finally {
             connection.disconnect()
         }
+        require(partial.renameTo(destination)) { "Could not finalize model download" }
     }
 
     private fun File.matches(model: ModelFile): Boolean =

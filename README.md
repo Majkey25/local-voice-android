@@ -3,8 +3,8 @@
 Local Voice is an Android-only, local-first dictation app. It keeps the active keyboard and adds a movable microphone through an `AccessibilityService` overlay.
 
 [Privacy policy, terms and data deletion](https://majkey25.github.io/local-voice-android/)
-are linked from every app screen. Version 0.4.1 clarifies optional saved voice
-references and prevents overlapping voice saves/deletes or false deletion success.
+are linked from every app screen. Version 0.4.2 bounds model downloads and asks
+before copying a dictation result to the system clipboard.
 
 ## Install the APK
 
