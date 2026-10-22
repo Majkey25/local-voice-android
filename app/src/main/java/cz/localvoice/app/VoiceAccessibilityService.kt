@@ -2,6 +2,7 @@ package cz.localvoice.app
 
 import android.Manifest
 import android.accessibilityservice.AccessibilityService
+import android.app.AlertDialog
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -12,6 +13,7 @@ import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.provider.Settings
 import android.view.Gravity
 import android.view.MotionEvent
@@ -48,6 +50,8 @@ class VoiceAccessibilityService : AccessibilityService() {
     private var cancelAttached = false
     private var undoAttached = false
     private var undoHideJob: Job? = null
+    private var copyDialog: AlertDialog? = null
+    private var copyHideJob: Job? = null
     private var processingJob: Job? = null
     private var whisper: WhisperEngine? = null
     private var whisperLanguage: String? = null
@@ -67,6 +71,7 @@ class VoiceAccessibilityService : AccessibilityService() {
     }
 
     override fun onInterrupt() {
+        dismissCopy()
         processingJob?.cancel()
         processingJob = null
         capture.cancel()
@@ -78,6 +83,7 @@ class VoiceAccessibilityService : AccessibilityService() {
     }
 
     override fun onDestroy() {
+        dismissCopy()
         detachOverlay()
         hideUndo(clearSnapshot = true)
         processingJob?.cancel()
@@ -165,6 +171,7 @@ class VoiceAccessibilityService : AccessibilityService() {
     }
 
     private fun startRecording() {
+        dismissCopy()
         val facts = focusedEditable()?.toFacts()
         if (facts == null || !FieldTargetPolicy.isSupported(facts, excludedPackages())) {
             toast(getString(R.string.unsupported_field))
@@ -238,9 +245,8 @@ class VoiceAccessibilityService : AccessibilityService() {
                     setState(State.READY)
                     showUndo()
                 } else {
-                    copy(plan.text)
-                    toast("The result is in the clipboard")
                     resetTargetState()
+                    offerCopy(plan.text)
                 }
             } catch (error: RuntimeException) {
                 toast(error.message ?: "Dictation failed")
@@ -533,9 +539,48 @@ class VoiceAccessibilityService : AccessibilityService() {
         setStroke(dp(1), Color.WHITE)
     }
 
+    internal fun offerCopy(text: String) {
+        dismissCopy()
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.copy_result_title)
+            .setMessage(getString(R.string.copy_result_message) + "\n\n" + text)
+            .setPositiveButton(R.string.copy_result) { _, _ -> copy(text) }
+            .setNegativeButton(android.R.string.cancel, null)
+            .create()
+        copyDialog = dialog
+        dialog.setOnDismissListener {
+            if (copyDialog === dialog) {
+                copyHideJob?.cancel()
+                copyHideJob = null
+                copyDialog = null
+            }
+        }
+        dialog.window?.apply {
+            setType(WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY)
+            addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        }
+        dialog.show()
+        copyHideJob = scope.launch {
+            delay(COPY_PREVIEW_TIMEOUT_MS)
+            dialog.dismiss()
+        }
+    }
+
+    private fun dismissCopy() {
+        copyHideJob?.cancel()
+        copyHideJob = null
+        copyDialog?.dismiss()
+        copyDialog = null
+    }
+
     private fun copy(text: String) {
         val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-        clipboard.setPrimaryClip(ClipData.newPlainText("Local Voice", text))
+        val clip = ClipData.newPlainText("Local Voice", text).apply {
+            description.extras = PersistableBundle().apply {
+                putBoolean("android.content.extra.IS_SENSITIVE", true)
+            }
+        }
+        clipboard.setPrimaryClip(clip)
     }
 
     private fun toast(message: String) = Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
@@ -628,5 +673,6 @@ class VoiceAccessibilityService : AccessibilityService() {
         const val PREFERENCES = "local_voice"
         private const val EXCLUDED_PACKAGES = "excluded_packages"
         private const val UNDO_TIMEOUT_MS = 8_000L
+        private const val COPY_PREVIEW_TIMEOUT_MS = 60_000L
     }
 }

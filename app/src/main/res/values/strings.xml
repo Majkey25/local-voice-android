@@ -20,4 +20,7 @@
     <string name="undo_last_insertion">Undo the last insertion</string>
     <string name="cancel_recording">Cancel recording</string>
     <string name="recording_cancelled">Recording cancelled.</string>
+    <string name="copy_result_title">Copy the dictation result?</string>
+    <string name="copy_result_message">The result was not inserted. Copying shares it with the system clipboard. This preview closes after one minute.</string>
+    <string name="copy_result">Copy</string>
 </resources>
