@@ -2,10 +2,10 @@ Local Voice third-party notices
 
 This APK includes APACHE-2.0.txt and WHISPER-MIT.txt alongside this file.
 
-sherpa-onnx 1.13.6, k2-fsa contributors, Apache License 2.0.
+sherpa-onnx 1.13.8, k2-fsa contributors, Apache License 2.0.
 https://github.com/k2-fsa/sherpa-onnx
 
-LiteRT-LM 0.16.1, Google AI Edge contributors, Apache License 2.0.
+LiteRT-LM 0.19.1, Google AI Edge contributors, Apache License 2.0.
 https://github.com/google-ai-edge/LiteRT-LM
 
 Whisper Tiny model, Copyright (c) 2022 OpenAI, MIT License.

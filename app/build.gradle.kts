@@ -1,12 +1,11 @@
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
     namespace = "cz.localvoice.app"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "cz.localvoice.app"
@@ -55,26 +54,26 @@ kotlin {
 }
 
 dependencies {
-    implementation(files("libs/sherpa-onnx-1.13.6.aar"))
-    implementation("com.google.ai.edge.litertlm:litertlm-android:0.16.1")
+    implementation(files("libs/sherpa-onnx-1.13.8.aar"))
+    implementation("com.google.ai.edge.litertlm:litertlm-android:0.19.1")
 
-    implementation("androidx.core:core-ktx:1.17.0")
+    implementation("androidx.core:core-ktx:1.19.1")
     implementation("androidx.activity:activity-compose:1.13.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.11.0")
 
-    implementation(platform("androidx.compose:compose-bom:2026.06.01"))
+    implementation(platform("androidx.compose:compose-bom:2026.09.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation(kotlin("test"))
-    testImplementation("org.json:json:20260719")
-    testImplementation("org.robolectric:robolectric:4.17")
+    testImplementation("org.json:json:20260814")
+    testImplementation("org.robolectric:robolectric:4.18")
 
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
-    androidTestImplementation(platform("androidx.compose:compose-bom:2026.06.01"))
+    androidTestImplementation(platform("androidx.compose:compose-bom:2026.09.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
