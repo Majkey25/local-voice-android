@@ -67,7 +67,7 @@ dependencies {
     implementation("androidx.compose.material3:material3")
 
     testImplementation("junit:junit:4.13.2")
-    testImplementation(kotlin("test"))
+    testImplementation(kotlin("test-junit"))
     testImplementation("org.json:json:20260814")
     testImplementation("org.robolectric:robolectric:4.18")
 
